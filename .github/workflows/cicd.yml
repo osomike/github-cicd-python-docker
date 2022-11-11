@@ -65,6 +65,23 @@ jobs:
       - name: Check out source code
         uses: actions/checkout@v3
 
+      - name: Get Credentials
+          env:
+            AZURE_CREDENTIALS: ${{ secrets.AZURE_CREDENTIALS }}
+        run: |
+          SP_CLIENTID="$(echo ${AZURE_CREDENTIALS} | jq -e -r 'select(.clientId != null) | .clientId')"
+          SP_CLIENTSECRET="$(echo ${AZURE_CREDENTIALS} | jq -e -r 'select(.clientSecret != null) | .clientSecret')"
+          echo "Add masking to secrets to avoid them being printed in the logs"
+          #echo "::add-mask::${SP_CLIENTID}"
+          #echo "::add-mask::${SP_CLIENTSECRET}"
+          echo "SP_CLIENTID=$SP_CLIENTID" >> $GITHUB_ENV
+          echo "SP_CLIENTSECRET=$SP_CLIENTSECRET" >> $GITHUB_ENV
+
+      - name: test Credentials
+        run: |
+          echo $SP_CLIENTID
+          echo $SP_CLIENTSECRET
+
       # Generate major, minor tag
       - name: Get major and minor versions
         run: |
