@@ -11,8 +11,9 @@ az ad sp create-for-rbac --name <my-service-principal-name> \
                          --sdk-auth
 ```
 
-You could also create a service principal for the whole subscription, just use -scopes ```</subscriptions/my-subscription-ID```
-The output should look like this:
+The scope of the service principal can be extended to the subscription, just use ```--scopes </subscriptions/my-subscription-ID``` instead.
+
+The output of the previous command should look like this:
 ```console
 {
   "clientId": "<cliend-ID>",
