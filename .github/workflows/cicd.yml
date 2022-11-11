@@ -16,7 +16,7 @@ on:
 # A workflow run is made up of one or more jobs that can run sequentially or in parallel
 jobs:
 
-  ################################################# Job called "test"
+  ################################################# Job called "test-and-linting"
   test-and-linting:
 
     # The type of runner that the job will run on
@@ -109,7 +109,7 @@ jobs:
         with:
           creds: ${{ secrets.AZURE_CREDENTIALS }}
 
-      # Login, build and push docker image
+      # Docker Login
       - name: Docker login
         uses: azure/docker-login@v1
         with:
@@ -117,6 +117,7 @@ jobs:
           username: ${{ env.SERVICE_PRINCIPAL_CLIENTID }}
           password: ${{ env.SERVICE_PRINCIPAL_SECRET }}
 
+      # Build and push docker image
       - name: Build and push docker image
         run: |
           docker build . -t ${{ env.REGISTRY_LOGIN_SERVER }}/${{env.APP_NAME}}:${{env.APP_NAME}}_v${{env.VERSION_TAG}}
