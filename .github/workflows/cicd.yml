@@ -17,7 +17,7 @@ on:
 jobs:
 
   ################################################# Job called "test"
-  test:
+  test-and-lintying:
 
     # The type of runner that the job will run on
     runs-on: ubuntu-latest
@@ -72,8 +72,9 @@ jobs:
           SP_CLIENTID="$(echo ${AZURE_CREDENTIALS} | jq -e -r 'select(.clientId != null) | .clientId')"
           SP_CLIENTSECRET="$(echo ${AZURE_CREDENTIALS} | jq -e -r 'select(.clientSecret != null) | .clientSecret')"
           echo "Add masking to secrets to avoid them being printed in the logs"
-          #echo "::add-mask::${SP_CLIENTID}"
-          #echo "::add-mask::${SP_CLIENTSECRET}"
+          echo "::add-mask::${SP_CLIENTID}"
+          echo "::add-mask::${SP_CLIENTSECRET}"
+          echo "Create ENV variables"
           echo "SP_CLIENTID=$SP_CLIENTID" >> $GITHUB_ENV
           echo "SP_CLIENTSECRET=$SP_CLIENTSECRET" >> $GITHUB_ENV
 
