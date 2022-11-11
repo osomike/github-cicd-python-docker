@@ -97,7 +97,7 @@ jobs:
       # Generate tag (must be done on a separate step, otherwise it fails)
       - name: Generate tag
         run: |
-          echo "VERSION_TAG=${{env.BRANCH_NAME}}.${{env.MAJOR_VERSION_TAG}}.${{env.MINOR_VERSION_TAG}}" >> $GITHUB_ENV
+          echo "VERSION_TAG=${{env.MAJOR_VERSION_TAG}}.${{env.MINOR_VERSION_TAG}}" >> $GITHUB_ENV
 
       - name: Use tag
         run: |
