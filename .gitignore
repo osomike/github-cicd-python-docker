@@ -10,3 +10,6 @@ __pycache__/
 
 # Test coverage files
 *.coverage
+
+# Terraform files
+*.terraform*

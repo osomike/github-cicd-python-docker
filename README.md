@@ -7,10 +7,29 @@ For its use, a service principal with contributor rights will be needed on the r
 ```console
 az ad sp create-for-rbac --name <my-service-principal-name> \
                          --role <role-name> \
-                         --scopes </subscriptions/my-subscription-ID/resourceGroups/myResourceGroupName>
+                         --scopes </subscriptions/my-subscription-ID/resourceGroups/myResourceGroupName> \
+                         --sdk-auth
 ```
 
-Store the output of the file as a secret anmed ```AZURE_CREDENTIALS``` in the repository.
+The scope of the service principal can be extended to the subscription, just use ```--scopes </subscriptions/my-subscription-ID``` instead.
+
+The output of the previous command should look like this:
+```console
+{
+  "clientId": "<cliend-ID>",
+  "clientSecret": "<cliend-secret>",
+  "subscriptionId": "<subscription-ID>",
+  "tenantId": "<tenant-ID>",
+  "activeDirectoryEndpointUrl": "https://login.microsoftonline.com",
+  "resourceManagerEndpointUrl": "https://management.azure.com/",
+  "activeDirectoryGraphResourceId": "https://graph.windows.net/",
+  "sqlManagementEndpointUrl": "https://management.core.windows.net:8443/",
+  "galleryEndpointUrl": "https://gallery.azure.com/",
+  "managementEndpointUrl": "https://management.core.windows.net/"
+}
+```
+
+Store this output as a secret named ```AZURE_CREDENTIALS``` in the repository.
 
 The file cicd.yml from github actions folder will read its content to perform the steps.
 

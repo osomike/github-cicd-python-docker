@@ -16,8 +16,8 @@ on:
 # A workflow run is made up of one or more jobs that can run sequentially or in parallel
 jobs:
 
-  ################################################# Job called "test"
-  test:
+  ################################################# Job called "test-and-linting"
+  test-and-linting:
 
     # The type of runner that the job will run on
     runs-on: ubuntu-latest
@@ -41,7 +41,7 @@ jobs:
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip setuptools wheel
-          pip install -r requirements.txt
+          pip install -r app/requirements.txt
       - name: Run pytest
         run: |
           coverage run --source=app/modules/ -m pytest -v tests && coverage report -m
@@ -53,7 +53,7 @@ jobs:
   build:
 
     # The type of runner that the job will run on
-    needs: test
+    needs: test-and-linting
     runs-on: ubuntu-latest
     environment:
       name: dev
@@ -64,6 +64,27 @@ jobs:
       # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it
       - name: Check out source code
         uses: actions/checkout@v3
+
+      # Parse AZURE_CREDENTIALS to get client ID and secret for service principal. And prevent them
+      # to be shown on the console logs using ::add-mask::
+      - name: Get environmental variables
+        env:
+          AZURE_CREDENTIALS: ${{ secrets.AZURE_CREDENTIALS }}
+        run: |
+          SERVICE_PRINCIPAL_CLIENTID="$(echo ${AZURE_CREDENTIALS} | jq -e -r 'select(.clientId != null) | .clientId')"
+          SERVICE_PRINCIPAL_SECRET="$(echo ${AZURE_CREDENTIALS} | jq -e -r 'select(.clientSecret != null) | .clientSecret')"
+          echo "Add masking to secrets to avoid them being printed in the logs"
+          echo "::add-mask::${SERVICE_PRINCIPAL_CLIENTID}"
+          echo "::add-mask::${SERVICE_PRINCIPAL_SECRET}"
+          echo "Create ENV variables"
+          echo "SERVICE_PRINCIPAL_CLIENTID=$SERVICE_PRINCIPAL_CLIENTID" >> $GITHUB_ENV
+          echo "SERVICE_PRINCIPAL_SECRET=$SERVICE_PRINCIPAL_SECRET" >> $GITHUB_ENV
+          echo "REGISTRY_LOGIN_SERVER=githubtst11ss55acr.azurecr.io" >> $GITHUB_ENV
+
+      - name: Print masked credentials
+        run: |
+          echo $SERVICE_PRINCIPAL_CLIENTID
+          echo $SERVICE_PRINCIPAL_SECRET
 
       # Generate major, minor tag
       - name: Get major and minor versions
@@ -88,13 +109,16 @@ jobs:
         with:
           creds: ${{ secrets.AZURE_CREDENTIALS }}
 
-      # Build and push docker image
-      - name: Build and push docker image
+      # Docker Login
+      - name: Docker login
         uses: azure/docker-login@v1
         with:
-          login-server: ${{ secrets.REGISTRY_LOGIN_SERVER }}
-          username: ${{ secrets.SERVICE_PRINCIPAL_CLIENTID }}
-          password: ${{ secrets.SERVICE_PRINCIPAL_SECRET }}
-      - run: |
-          docker build . -t ${{ secrets.REGISTRY_LOGIN_SERVER }}/${{env.APP_NAME}}:${{env.APP_NAME}}_v${{env.VERSION_TAG}}
-          docker push ${{ secrets.REGISTRY_LOGIN_SERVER }}/${{env.APP_NAME}}:${{env.APP_NAME}}_v${{env.VERSION_TAG}}
+          login-server: ${{ env.REGISTRY_LOGIN_SERVER }}
+          username: ${{ env.SERVICE_PRINCIPAL_CLIENTID }}
+          password: ${{ env.SERVICE_PRINCIPAL_SECRET }}
+
+      # Build and push docker image
+      - name: Build and push docker image
+        run: |
+          docker build . -t ${{ env.REGISTRY_LOGIN_SERVER }}/${{env.APP_NAME}}:${{env.APP_NAME}}_v${{env.VERSION_TAG}}
+          docker push ${{ env.REGISTRY_LOGIN_SERVER }}/${{env.APP_NAME}}:${{env.APP_NAME}}_v${{env.VERSION_TAG}}
