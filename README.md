@@ -1,8 +1,8 @@
 This repository serves as a skeleton for integrating a CI-CD for a Dockerized application which will be pushed to the Azure Container Registry.
 
-For its use, a service principal with contributor rights will be needed on the resource groups where the container registry will be hosted.
+For its use, a resource group, a container registry and a service principal with contributor or owner rights will be needed.
 
-
+To create the service principal you can execute:
 
 ```console
 az ad sp create-for-rbac --name <my-service-principal-name> \
@@ -31,6 +31,20 @@ The output of the previous command should look like this:
 
 Store this output as a secret named ```AZURE_CREDENTIALS``` in the repository.
 
-The file cicd.yml from github actions folder will read its content to perform the steps.
+To create the resource group and the container registry, use the terraform files on the ```infrastructure``` folder.
 
-The repository should also also contain the [Environments](https://docs.github.com/en/actions/deployment/targeting-different-environments/using-environments-for-deployment) ```dev```, ```acp``` and ```prd```.
+For it, execute:
+```console
+cd infrastructure
+terraform init
+terraform apply
+```
+
+Once your test are done, you can get rid of the infrastructure by calling
+```console
+terraform destroy
+```
+
+The file ```cicd.yml``` from github workflows folder will read its content to perform the steps.
+
+The repository can also contain the [Environments](https://docs.github.com/en/actions/deployment/targeting-different-environments/using-environments-for-deployment) ```dev```, ```acp``` and ```prd```.
