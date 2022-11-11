@@ -92,11 +92,12 @@ jobs:
           echo "MINOR_VERSION_TAG=$(git rev-parse --short HEAD)" >> $GITHUB_ENV
           echo "MAJOR_VERSION_TAG=$(cat version)" >> $GITHUB_ENV
           echo "APP_NAME=app-test" >> $GITHUB_ENV
+          echo "BRANCH_NAME=$(git branch --show-current)" >> $GITHUB_ENV
 
       # Generate tag (must be done on a separate step, otherwise it fails)
       - name: Generate tag
         run: |
-          echo "VERSION_TAG=${{env.MAJOR_VERSION_TAG}}.${{env.MINOR_VERSION_TAG}}" >> $GITHUB_ENV
+          echo "VERSION_TAG=${{env.BRANCH_NAME}}.${{env.MAJOR_VERSION_TAG}}.${{env.MINOR_VERSION_TAG}}" >> $GITHUB_ENV
 
       - name: Use tag
         run: |
