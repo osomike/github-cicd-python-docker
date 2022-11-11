@@ -65,23 +65,25 @@ jobs:
       - name: Check out source code
         uses: actions/checkout@v3
 
+      # Parse AZURE_CREDENTIALS to get client ID and secret for service principal. And prevent them
+      # to be shown on the console logs using ::add-mask::
       - name: Get Credentials
         env:
           AZURE_CREDENTIALS: ${{ secrets.AZURE_CREDENTIALS }}
         run: |
-          SP_CLIENTID="$(echo ${AZURE_CREDENTIALS} | jq -e -r 'select(.clientId != null) | .clientId')"
-          SP_CLIENTSECRET="$(echo ${AZURE_CREDENTIALS} | jq -e -r 'select(.clientSecret != null) | .clientSecret')"
+          SERVICE_PRINCIPAL_CLIENTID="$(echo ${AZURE_CREDENTIALS} | jq -e -r 'select(.clientId != null) | .clientId')"
+          SERVICE_PRINCIPAL_SECRET="$(echo ${AZURE_CREDENTIALS} | jq -e -r 'select(.clientSecret != null) | .clientSecret')"
           echo "Add masking to secrets to avoid them being printed in the logs"
-          echo "::add-mask::${SP_CLIENTID}"
-          echo "::add-mask::${SP_CLIENTSECRET}"
+          echo "::add-mask::${SERVICE_PRINCIPAL_CLIENTID}"
+          echo "::add-mask::${SERVICE_PRINCIPAL_SECRET}"
           echo "Create ENV variables"
-          echo "SP_CLIENTID=$SP_CLIENTID" >> $GITHUB_ENV
-          echo "SP_CLIENTSECRET=$SP_CLIENTSECRET" >> $GITHUB_ENV
+          echo "SERVICE_PRINCIPAL_CLIENTID=$SERVICE_PRINCIPAL_CLIENTID" >> $GITHUB_ENV
+          echo "SERVICE_PRINCIPAL_SECRET=$SERVICE_PRINCIPAL_SECRET" >> $GITHUB_ENV
 
-      - name: test Credentials
+      - name: Print masked credentials
         run: |
-          echo $SP_CLIENTID
-          echo $SP_CLIENTSECRET
+          echo $SERVICE_PRINCIPAL_CLIENTID
+          echo $SERVICE_PRINCIPAL_SECRET
 
       # Generate major, minor tag
       - name: Get major and minor versions
@@ -89,6 +91,7 @@ jobs:
           echo "MINOR_VERSION_TAG=$(git rev-parse --short HEAD)" >> $GITHUB_ENV
           echo "MAJOR_VERSION_TAG=$(cat version)" >> $GITHUB_ENV
           echo "APP_NAME=app-test" >> $GITHUB_ENV
+          echo "REGISTRY_LOGIN_SERVER=dipgithubregistry.azurecr.io" >> $GITHUB_ENV
 
       # Generate tag (must be done on a separate step, otherwise it fails)
       - name: Generate tag
@@ -110,9 +113,9 @@ jobs:
       - name: Build and push docker image
         uses: azure/docker-login@v1
         with:
-          login-server: ${{ secrets.REGISTRY_LOGIN_SERVER }}
-          username: ${{ secrets.SERVICE_PRINCIPAL_CLIENTID }}
-          password: ${{ secrets.SERVICE_PRINCIPAL_SECRET }}
+          login-server: ${{ env.REGISTRY_LOGIN_SERVER }}
+          username: ${{ env.SERVICE_PRINCIPAL_CLIENTID }}
+          password: ${{ env.SERVICE_PRINCIPAL_SECRET }}
       - run: |
-          docker build . -t ${{ secrets.REGISTRY_LOGIN_SERVER }}/${{env.APP_NAME}}:${{env.APP_NAME}}_v${{env.VERSION_TAG}}
-          docker push ${{ secrets.REGISTRY_LOGIN_SERVER }}/${{env.APP_NAME}}:${{env.APP_NAME}}_v${{env.VERSION_TAG}}
+          docker build . -t ${{ env.REGISTRY_LOGIN_SERVER }}/${{env.APP_NAME}}:${{env.APP_NAME}}_v${{env.VERSION_TAG}}
+          docker push ${{ env.REGISTRY_LOGIN_SERVER }}/${{env.APP_NAME}}:${{env.APP_NAME}}_v${{env.VERSION_TAG}}
